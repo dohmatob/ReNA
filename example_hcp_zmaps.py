@@ -9,10 +9,10 @@ from rena import ReNA
 # config
 n_jobs = int(os.environ.get("N_JOBS", 1))
 root = os.environ.get("ROOT", "/")
+mem = os.environ.get("CACHE_DIR", "nilearn_cache")
 mask_img = os.path.join(root, "storage/data/HCP_extra/mask_img.nii.gz")
 n_clusters = int(os.environ.get("N_CLUSTERS", 100))
 smoothing_fwhm = float(os.environ.get("FHWM", 6.))
-mem = "nilearn_cache"
 
 # get data to be parcellated
 zmaps = sorted(
@@ -26,17 +26,17 @@ masker = NiftiMasker(mask_strategy='epi', smoothing_fwhm=smoothing_fwhm,
 
 X_masked = masker.fit_transform(zmaps)
 
-cluster = ReNA(scaling=True, n_clusters=100, masker=masker,
-               memory=mem)
-X_reduced = cluster.fit_transform(X_masked)
-X_compressed = cluster.inverse_transform(X_reduced)
+model = ReNA(scaling=True, n_clusters=100, masker=masker,
+             memory=mem)
+X_reduced = model.fit_transform(X_masked)
+X_compressed = model.inverse_transform(X_reduced)
+masker.inverse_transform(X_compressed).to_filename("compressed.nii.gz")
 
 # Shuffle the labels (for better visualization):
-labels = cluster.labels_
+labels = model.labels_
 permutation = np.random.permutation(labels.shape[0])
 labels = permutation[labels]
 labels_img_ = masker.inverse_transform(labels)
-labels_img_.to_filename("hcp_zmap_parcels.nii.gz")
 
 # plot stuff
 cut_coords = (-52, -2)
