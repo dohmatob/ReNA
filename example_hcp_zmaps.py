@@ -26,17 +26,16 @@ masker = NiftiMasker(mask_strategy='epi', smoothing_fwhm=smoothing_fwhm,
 
 X_masked = masker.fit_transform(zmaps)
 
-model = ReNA(scaling=True, n_clusters=100, masker=masker,
+model = ReNA(scaling=True, n_clusters=n_clusters, masker=masker,
              memory=mem)
 X_reduced = model.fit_transform(X_masked)
 X_compressed = model.inverse_transform(X_reduced)
 masker.inverse_transform(X_compressed).to_filename("compressed.nii.gz")
 
-# Shuffle the labels (for better visualization):
-labels = model.labels_
-permutation = np.random.permutation(labels.shape[0])
-labels = permutation[labels]
+# shuffle the labels (for better visualization):
+labels = model.labels_ + 1
 labels_img_ = masker.inverse_transform(labels)
+labels_img_.to_filename("hcp_zmap_parcels.nii.gz")
 
 # plot stuff
 cut_coords = (-52, -2)
